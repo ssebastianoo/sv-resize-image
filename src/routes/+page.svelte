@@ -1,16 +1,26 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy } from 'svelte';
+	import { cn } from '$lib/utils';
 
 	let fileElement = $state<HTMLInputElement>();
-	let fileSize = $state<number>();
+	let fileSize = $state(0);
+	let expectedFileSize = $state(0);
 	let fileDimension = $state({ width: 0, height: 0 });
 	let originalDimension = { width: 0, height: 0 };
 	let canSave = $state(false);
 	let lockAspectRatio = $state(true);
 	let fileURL: string | null;
+	let a = $state<HTMLAnchorElement>();
+	let buttonText = $state('choose file');
 
 	function handleFile() {
 		if (!fileElement || !fileElement.files || !fileURL) return;
+
+		if (a) {
+			a.click();
+			return;
+		}
+
 		const file = fileElement.files[0];
 
 		const canvas = document.createElement('canvas');
@@ -21,25 +31,31 @@
 		const newFileName = fileName + '-resized.' + extension;
 
 		const img = new Image();
+
 		img.src = fileURL;
 		img.onload = () => {
+			console.log('a');
 			canvas.width = fileDimension.width;
 			canvas.height = fileDimension.height;
 
 			ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvas.width, canvas.height);
+			console.log('b');
 
 			canvas.toBlob((blob) => {
 				if (!blob) return;
 				const resizedFile = new File([blob], newFileName, { type: file.type });
+				console.log('c');
 
-				const a = document.createElement('a');
+				if (a) URL.revokeObjectURL(a.href);
+
+				a = document.createElement('a');
 				const resizedFileURL = URL.createObjectURL(resizedFile);
 				a.href = resizedFileURL;
 				a.download = newFileName;
 				a.click();
+				a.remove();
 
-				URL.revokeObjectURL(fileURL!);
-				URL.revokeObjectURL(resizedFileURL);
+				console.log('d');
 			}, file.type);
 		};
 		img.onerror = () => {
@@ -61,10 +77,18 @@
 			return;
 		}
 
+		buttonText = fileElement.files[0].name;
+
 		const file = fileElement.files[0];
 
 		if (fileURL) URL.revokeObjectURL(fileURL);
 		fileURL = URL.createObjectURL(file);
+
+		if (a) {
+			URL.revokeObjectURL(a.href);
+			a.remove();
+			a = undefined;
+		}
 
 		canSave = true;
 		fileSize = fileElement.files[0].size;
@@ -76,7 +100,17 @@
 			fileDimension.height = img.height;
 
 			originalDimension = { ...fileDimension };
+
+			updateExpectedFileSize();
 		};
+
+		img.remove();
+	}
+
+	function updateExpectedFileSize() {
+		const originalArea = originalDimension.width * originalDimension.height;
+		const newArea = fileDimension.width * fileDimension.height;
+		expectedFileSize = Math.floor((newArea / originalArea) * fileSize);
 	}
 
 	function handleResize(edited: 'width' | 'height') {
@@ -91,7 +125,13 @@
 				);
 			}
 		}
+		updateExpectedFileSize();
 	}
+
+	onDestroy(() => {
+		if (fileURL) URL.revokeObjectURL(fileURL!);
+		if (a) URL.revokeObjectURL(a.href);
+	});
 </script>
 
 <div class="flex h-full w-full flex-col items-center justify-center gap-3">
@@ -101,7 +141,22 @@
 		{#if fileSize}
 			<p>{humanSize(fileSize)}</p>
 		{/if}
-		<input onchange={checkImage} bind:this={fileElement} accept="image/*" type="file" />
+		<input
+			onchange={checkImage}
+			bind:this={fileElement}
+			accept="image/*"
+			type="file"
+			class="hidden"
+		/>
+		<button
+			onclick={() => {
+				if (fileElement) fileElement.click();
+			}}
+			class={cn(
+				'w-full rounded-md border p-2 outline-none hover:bg-neutral-900',
+				canSave ? 'border-neutral-800' : 'border-transparent'
+			)}>{buttonText}</button
+		>
 	</div>
 	{#if canSave}
 		<div
@@ -149,7 +204,7 @@
 			</div>
 			<button
 				class="w-full rounded-lg border border-transparent bg-neutral-900 p-2 hover:border-neutral-600"
-				onclick={handleFile}>save</button
+				onclick={handleFile}>save ({humanSize(expectedFileSize)})</button
 			>
 		</div>
 	{/if}
