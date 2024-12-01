@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { cn } from '$lib/utils';
 
 	let fileElement = $state<HTMLInputElement>();
@@ -12,6 +12,52 @@
 	let fileURL: string | null;
 	let a = $state<HTMLAnchorElement>();
 	let buttonText = $state('choose file');
+	let dropping = $state(false);
+	let dragCounter = 0;
+
+	onMount(() => {
+		const handleDragOver = (e: DragEvent) => {
+			e.preventDefault();
+		};
+
+		const handleDragEnter = (e: DragEvent) => {
+			e.preventDefault();
+			dragCounter++;
+			dropping = true;
+		};
+
+		const handleDragLeave = (e: DragEvent) => {
+			e.preventDefault();
+			dragCounter--;
+			if (dragCounter === 0) {
+				dropping = false;
+			}
+		};
+
+		const handleDrop = (e: DragEvent) => {
+			e.preventDefault();
+			dragCounter = 0;
+			dropping = false;
+
+			if (fileElement && e.dataTransfer && e.dataTransfer.files) {
+				fileElement.files = e.dataTransfer.files;
+			}
+
+			checkImage();
+		};
+
+		window.addEventListener('dragover', handleDragOver);
+		window.addEventListener('dragenter', handleDragEnter);
+		window.addEventListener('dragleave', handleDragLeave);
+		window.addEventListener('drop', handleDrop);
+
+		return () => {
+			window.removeEventListener('dragover', handleDragOver);
+			window.removeEventListener('dragenter', handleDragEnter);
+			window.removeEventListener('dragleave', handleDragLeave);
+			window.removeEventListener('drop', handleDrop);
+		};
+	});
 
 	function handleFile() {
 		if (!fileElement || !fileElement.files || !fileURL) return;
@@ -34,17 +80,14 @@
 
 		img.src = fileURL;
 		img.onload = () => {
-			console.log('a');
 			canvas.width = fileDimension.width;
 			canvas.height = fileDimension.height;
 
 			ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvas.width, canvas.height);
-			console.log('b');
 
 			canvas.toBlob((blob) => {
 				if (!blob) return;
 				const resizedFile = new File([blob], newFileName, { type: file.type });
-				console.log('c');
 
 				if (a) URL.revokeObjectURL(a.href);
 
@@ -54,8 +97,6 @@
 				a.download = newFileName;
 				a.click();
 				a.remove();
-
-				console.log('d');
 			}, file.type);
 		};
 		img.onerror = () => {
@@ -72,8 +113,16 @@
 	}
 
 	function checkImage() {
-		if (!fileElement || !fileElement.files || !fileElement.files[0].type.startsWith('image/')) {
+		if (!fileElement || !fileElement.files) {
 			canSave = false;
+			return;
+		}
+
+		if (!fileElement.files[0].type.startsWith('image/')) {
+			canSave = false;
+			alert('only images are supported');
+			// @ts-ignore
+			fileElement.value = null;
 			return;
 		}
 
@@ -134,7 +183,8 @@
 	});
 </script>
 
-<div class="flex h-full w-full flex-col items-center justify-center gap-3">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="relative flex h-full w-full flex-col items-center justify-center gap-3">
 	<div
 		class="flex w-2/3 max-w-96 flex-col gap-3 rounded-lg border border-neutral-800 bg-neutral-950 p-4"
 	>
@@ -206,6 +256,13 @@
 				class="w-full rounded-lg border border-transparent bg-neutral-900 p-2 hover:border-neutral-600"
 				onclick={handleFile}>save ({humanSize(expectedFileSize)})</button
 			>
+		</div>
+	{/if}
+	{#if dropping}
+		<div
+			class="absolute flex h-full w-full items-center justify-center rounded-3xl border border-dashed border-neutral-500 bg-neutral-700 bg-opacity-40 backdrop-blur-[2px]"
+		>
+			<p>Drop your image here</p>
 		</div>
 	{/if}
 </div>
