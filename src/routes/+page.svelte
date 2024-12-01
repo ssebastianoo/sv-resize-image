@@ -262,7 +262,7 @@
 		<div
 			class="absolute flex h-full w-full items-center justify-center rounded-3xl border border-dashed border-neutral-500 bg-neutral-700 bg-opacity-40 backdrop-blur-[2px]"
 		>
-			<p>Drop your image here</p>
+			<p>drop your image here</p>
 		</div>
 	{/if}
 </div>
