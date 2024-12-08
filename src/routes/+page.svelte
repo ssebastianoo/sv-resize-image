@@ -185,96 +185,109 @@
 	});
 </script>
 
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="relative flex h-full w-full flex-col items-center justify-center gap-3">
-	<div
-		class="flex w-5/6 max-w-96 flex-col gap-3 rounded-lg border border-neutral-800 bg-neutral-950 p-4"
-	>
-		{#if fileSize}
-			<p>{humanSize(fileSize)}</p>
-		{/if}
-		<input
-			onchange={checkImage}
-			bind:this={fileElement}
-			accept="image/*"
-			type="file"
-			class="hidden"
-		/>
-		<button
-			onclick={() => {
-				if (fileElement) fileElement.click();
-			}}
-			class={cn(
-				'w-full rounded-md border p-2 outline-none hover:bg-neutral-900',
-				canSave ? 'border-neutral-800 text-sm' : 'border-transparent'
-			)}>{buttonText}</button
-		>
-		{#if canSave}
-			<div class="relative flex justify-center">
-				<img
-					src={fileURL}
-					class="absolute left-0 top-0 z-10 h-40 w-full opacity-50 blur-sm"
-					alt="background"
-				/>
-				<img src={fileURL} alt="Uploaded" class="z-20 h-40 w-auto rounded-md" />
-			</div>
-		{/if}
-	</div>
-	{#if canSave}
+<div class="flex h-full flex-col justify-between">
+	<div class="h-8 w-full"></div>
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="relative flex h-full w-full flex-col items-center justify-center gap-3">
 		<div
 			class="flex w-5/6 max-w-96 flex-col gap-3 rounded-lg border border-neutral-800 bg-neutral-950 p-4"
 		>
-			<div class="flex items-center gap-3">
-				<input
-					type="checkbox"
-					id="lockAspectRatio"
-					class="cursor-pointer"
-					checked={lockAspectRatio}
-					onclick={() => {
-						lockAspectRatio = !lockAspectRatio;
-						if (lockAspectRatio) {
-							if (fileDimension.width > fileDimension.height) {
-								handleResize('width');
-							} else {
-								handleResize('height');
-							}
-						}
-					}}
-				/>
-				<label for="lockAspectRatio">lock aspect ratio</label>
-			</div>
-			<div class="flex items-center justify-between gap-2">
-				<input
-					type="number"
-					class="w-full rounded-md border border-neutral-800 bg-neutral-900 px-2 py-1 outline-none"
-					placeholder="width"
-					bind:value={fileDimension.width}
-					onchange={() => {
-						handleResize('width');
-					}}
-				/>
-				<p class="text-neutral-400">x</p>
-				<input
-					type="number"
-					class="w-full rounded-md border border-neutral-800 bg-neutral-900 px-2 py-1 outline-none"
-					placeholder="height"
-					bind:value={fileDimension.height}
-					onchange={() => {
-						handleResize('height');
-					}}
-				/>
-			</div>
+			{#if fileSize}
+				<p>{humanSize(fileSize)}</p>
+			{/if}
+			<input
+				onchange={checkImage}
+				bind:this={fileElement}
+				accept="image/*"
+				type="file"
+				class="hidden"
+			/>
 			<button
-				class="w-full rounded-lg border border-transparent bg-neutral-900 p-2 hover:border-neutral-600"
-				onclick={handleFile}>save (≈ {humanSize(expectedFileSize)})</button
+				onclick={() => {
+					if (fileElement) fileElement.click();
+				}}
+				class={cn(
+					'w-full rounded-md border p-2 outline-none hover:bg-neutral-900',
+					canSave ? 'border-neutral-800 text-sm' : 'border-transparent'
+				)}>{buttonText}</button
 			>
+			{#if canSave}
+				<div class="relative flex justify-center">
+					<img
+						src={fileURL}
+						class="absolute left-0 top-0 z-10 h-40 w-full opacity-50 blur-sm"
+						alt="background"
+					/>
+					<img src={fileURL} alt="Uploaded" class="z-20 h-40 w-auto rounded-md" />
+				</div>
+			{/if}
 		</div>
-	{/if}
-	{#if dropping}
-		<div
-			class="absolute flex h-full w-full items-center justify-center rounded-3xl border border-dashed border-neutral-500 bg-neutral-700 bg-opacity-40 backdrop-blur-[2px]"
+		{#if canSave}
+			<div
+				class="flex w-5/6 max-w-96 flex-col gap-3 rounded-lg border border-neutral-800 bg-neutral-950 p-4"
+			>
+				<div class="flex items-center gap-3">
+					<input
+						type="checkbox"
+						id="lockAspectRatio"
+						class="cursor-pointer"
+						checked={lockAspectRatio}
+						onclick={() => {
+							lockAspectRatio = !lockAspectRatio;
+							if (lockAspectRatio) {
+								if (fileDimension.width > fileDimension.height) {
+									handleResize('width');
+								} else {
+									handleResize('height');
+								}
+							}
+						}}
+					/>
+					<label for="lockAspectRatio">lock aspect ratio</label>
+				</div>
+				<div class="flex items-center justify-between gap-2">
+					<input
+						type="number"
+						class="w-full rounded-md border border-neutral-800 bg-neutral-900 px-2 py-1 outline-none"
+						placeholder="width"
+						bind:value={fileDimension.width}
+						onchange={() => {
+							handleResize('width');
+						}}
+					/>
+					<p class="text-neutral-400">x</p>
+					<input
+						type="number"
+						class="w-full rounded-md border border-neutral-800 bg-neutral-900 px-2 py-1 outline-none"
+						placeholder="height"
+						bind:value={fileDimension.height}
+						onchange={() => {
+							handleResize('height');
+						}}
+					/>
+				</div>
+				<button
+					class="w-full rounded-lg border border-transparent bg-neutral-900 p-2 hover:border-neutral-600"
+					onclick={handleFile}>save (≈ {humanSize(expectedFileSize)})</button
+				>
+			</div>
+		{/if}
+		{#if dropping}
+			<div
+				class="absolute flex h-full w-full items-center justify-center rounded-3xl border border-dashed border-neutral-500 bg-neutral-700 bg-opacity-40 backdrop-blur-[2px]"
+			>
+				<p>drop your image here</p>
+			</div>
+		{/if}
+	</div>
+	<footer class="flex h-8 items-end justify-center gap-4">
+		<a href="https://gir8.it" target="_blank" class="text-sm text-neutral-400 hover:underline"
+			>made by seb</a
 		>
-			<p>drop your image here</p>
-		</div>
-	{/if}
+		<a
+			href="https://github.com/ssebastianoo/sv-resize-image"
+			target="_blank"
+			class="text-sm text-neutral-400 hover:underline">github</a
+		>
+	</footer>
 </div>
