@@ -9,7 +9,7 @@
 	let originalDimension = { width: 0, height: 0 };
 	let canSave = $state(false);
 	let lockAspectRatio = $state(true);
-	let fileURL: string | null;
+	let fileURL = $state<string | null>(null);
 	let a = $state<HTMLAnchorElement>();
 	let buttonText = $state('choose file');
 	let dropping = $state(false);
@@ -128,6 +128,8 @@
 
 		buttonText = fileElement.files[0].name;
 
+		if (buttonText.length > 30) buttonText = buttonText.slice(0, 30) + '...';
+
 		const file = fileElement.files[0];
 
 		if (fileURL) URL.revokeObjectURL(fileURL);
@@ -186,7 +188,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="relative flex h-full w-full flex-col items-center justify-center gap-3">
 	<div
-		class="flex w-2/3 max-w-96 flex-col gap-3 rounded-lg border border-neutral-800 bg-neutral-950 p-4"
+		class="flex w-5/6 max-w-96 flex-col gap-3 rounded-lg border border-neutral-800 bg-neutral-950 p-4"
 	>
 		{#if fileSize}
 			<p>{humanSize(fileSize)}</p>
@@ -204,13 +206,23 @@
 			}}
 			class={cn(
 				'w-full rounded-md border p-2 outline-none hover:bg-neutral-900',
-				canSave ? 'border-neutral-800' : 'border-transparent'
+				canSave ? 'border-neutral-800 text-sm' : 'border-transparent'
 			)}>{buttonText}</button
 		>
+		{#if canSave}
+			<div class="relative flex justify-center">
+				<img
+					src={fileURL}
+					class="absolute left-0 top-0 z-10 h-40 w-full opacity-50 blur-sm"
+					alt="background"
+				/>
+				<img src={fileURL} alt="Uploaded" class="z-20 h-40 w-auto rounded-md" />
+			</div>
+		{/if}
 	</div>
 	{#if canSave}
 		<div
-			class="flex w-2/3 max-w-96 flex-col gap-3 rounded-lg border border-neutral-800 bg-neutral-950 p-4"
+			class="flex w-5/6 max-w-96 flex-col gap-3 rounded-lg border border-neutral-800 bg-neutral-950 p-4"
 		>
 			<div class="flex items-center gap-3">
 				<input
@@ -254,7 +266,7 @@
 			</div>
 			<button
 				class="w-full rounded-lg border border-transparent bg-neutral-900 p-2 hover:border-neutral-600"
-				onclick={handleFile}>save ({humanSize(expectedFileSize)})</button
+				onclick={handleFile}>save (≈ {humanSize(expectedFileSize)})</button
 			>
 		</div>
 	{/if}
